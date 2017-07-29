@@ -14,6 +14,8 @@ library(tidyverse)
 library(stringr)
 ```
 
+### String Basics
+
 ##### 1. In code that doesn't use `stringr`, you'll often see `paste()` and `paste0()`. What's the difference between the two functions? What `stringr` function are they equivalent to? How do the functions differ in their handling of NA?
 
 `paste()` automatically includes a space between each character string it combines. `paste0()` does not include a space. They are ~equivalent to `str_c()` from `library(stringr)`. `paste()` and `paste0()` include NA as text. `str_c()` returns an NA for the entire string if the string contains an NA. 
@@ -77,8 +79,132 @@ It trims whitespace from the left, right, or both sides of a character string. I
 
 ```{r str_function}
 
+list_maker <- function(string) {
+  
+  if (length(string) > 1) {
+  stringa <- string[1:length(string)-1]
+  stringb <- string[length(string)]
+  
+  stringa <- str_c(stringa, collapse = ", ")
+  
+  str_c(stringa, ", and ", stringb, collapse = "")
+  } else {
+    string
+    }
+  }
 
+string <- c("a", "b", "c", "d", "e")
 
+list_maker(string)
+```
 
+### Matching Patterns with Regular Expressions
 
+##### 1. Explain why each of these strings don't match a \: "\", "\\", "\\\".
+
+* "\" escapes the quotation mark and isn't a valid character string in R.
+* "\\" returns a character string with two backslashes which doesn't match one  backslash. 
+* "\\\" escapes the quotation mark and isn't a valid character string.
+
+##### 2. How would you match the sequence "'\?
+
+```{r escape}
+
+```
+
+##### 3. What patterns will the regular expression \..\..\.. match? How would you represent it as a string?
+
+It will match a string of three periods separated by characters. `\\..\\..\\..`.
+
+```{r \..\..\..}
+str_view(".a.b.c", "\\..\\..\\..")
+```
+
+### Anchors
+
+##### 1. How would you match the literal string "$^$"?
+```{r anchors 1}
+x <- "$^$"
+str_view(x, "\\$\\^\\$")
+```
+
+#####. 2. Given the corpus of common words in stringr::words, create regular expressions that will find all words that:
+
+1. Start with "y"
+```{r anchor 2.1}
+str_view(words, "^y", match = TRUE)
+```
+
+2. End with "x"
+```{r anchor 2.1}
+str_detect(words, "x$", match = TRUE)
+```
+
+3. Are exactly three letters long. (Don't cheat by using `str_length()`!)
+```{r anchor 2.1}
+str_view(words, "^...$", match = TRUE)
+```
+
+4. Have seven letters or more.
+```{r anchor 2.1}
+str_view(words, "^.......", match = TRUE)
+```
+
+### Character Classes and Alternatives
+
+##### 1. Create regular expressions to find all words that:
+
+1. Start with a vowel
+```{r classes 1.1}
+str_view(words, "^[aeiou]", match = TRUE)
+```
+
+2. Only contain consonants. (Hint: think about match "not"-vowels.)
+```{r classes 1.2}
+str_view(words, "^[^aeiou]+$", match = TRUE)
+```
+
+I'm not sure if this can be done with `+` which is introduced on page 204 after the exercises. 
+
+3. End with ed, but not with eed.
+```{r classes 1.3}
+str_view(words, "[^e]ed$", match = TRUE)
+```
+
+4. End with ing or ize. 
+```{r classes 1.4}
+str_view(words, "ing$|ize$", match = TRUE)
+```
+
+##### 2. Empirically verify the rule "i before e except after c."
+
+Let's try this with proof by contradiction. We need to look for two conditions:
+
+* ie after c
+* ei 
+```{r i before e}
+str_view(words, "ei|[c]ie", match = TRUE)
+```
+
+Six words violate the rules. "i before e except after c" is and always will be rubbish. 
+
+##### 3. Is "q" always followed by a "u"?
+
+Proof by contradiction: look for a "q" not followed by a "u".
+```{r qu}
+str_view(words, "q^[u]", match = TRUE)
+```
+Yes, "q" is always followed by a "u" in this data set. 
+
+##### 4. Write a regular expression that matches a word if it's probably written in British English, not American English. 
+```{r british english}
+str_view(words, "our|ise|ogue", match = TRUE)
+```
+
+##### 5. Create a regular expression that will match telephone numbers as commonly written in your country. 
+
+```{r telephones}
+phone <- c("212-555-7891", "(212)-555-7891")
+
+str_view(phone, "\\d\\d\\d-\\d\\d\\d-\\d\\d\\d\\d|\\(\\d\\d\\d\\)-\\d\\d\\d-\\d\\d\\d\\d", match = TRUE)
 ```
