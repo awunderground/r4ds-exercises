@@ -7,6 +7,8 @@ output: html_document
 
 ```{r setup rmarkdown, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
 ```
 
 ```{r setup r}
@@ -14,7 +16,7 @@ library(tidyverse)
 library(stringr)
 ```
 
-### String Basics
+## String Basics
 
 ##### 1. In code that doesn't use `stringr`, you'll often see `paste()` and `paste0()`. What's the difference between the two functions? What `stringr` function are they equivalent to? How do the functions differ in their handling of NA?
 
@@ -98,7 +100,7 @@ string <- c("a", "b", "c", "d", "e")
 list_maker(string)
 ```
 
-### Matching Patterns with Regular Expressions
+## Matching Patterns with Regular Expressions
 
 ##### 1. Explain why each of these strings don't match a \: "\", "\\", "\\\".
 
@@ -116,11 +118,11 @@ list_maker(string)
 
 It will match a string of three periods separated by characters. `\\..\\..\\..`.
 
-```{r \..\..\..}
+```{r periods and letters}
 str_view(".a.b.c", "\\..\\..\\..")
 ```
 
-### Anchors
+## Anchors
 
 ##### 1. How would you match the literal string "$^$"?
 ```{r anchors 1}
@@ -136,27 +138,27 @@ str_view(words, "^y", match = TRUE)
 ```
 
 2. End with "x"
-```{r anchor 2.1}
-str_detect(words, "x$", match = TRUE)
+```{r anchor 2.2}
+table(str_detect(words, "x$"))
 ```
 
 3. Are exactly three letters long. (Don't cheat by using `str_length()`!)
-```{r anchor 2.1}
-str_view(words, "^...$", match = TRUE)
+```{r anchor 2.3}
+table(str_detect(words, "^...$"))
 ```
 
 4. Have seven letters or more.
-```{r anchor 2.1}
-str_view(words, "^.......", match = TRUE)
+```{r anchor 2.4}
+table(str_detect(words, "^......."))
 ```
 
-### Character Classes and Alternatives
+## Character Classes and Alternatives
 
 ##### 1. Create regular expressions to find all words that:
 
 1. Start with a vowel
 ```{r classes 1.1}
-str_view(words, "^[aeiou]", match = TRUE)
+str_view(words[1:10], "^[aeiou]", match = TRUE)
 ```
 
 2. Only contain consonants. (Hint: think about match "not"-vowels.)
@@ -208,3 +210,170 @@ phone <- c("212-555-7891", "(212)-555-7891")
 
 str_view(phone, "\\d\\d\\d-\\d\\d\\d-\\d\\d\\d\\d|\\(\\d\\d\\d\\)-\\d\\d\\d-\\d\\d\\d\\d", match = TRUE)
 ```
+
+## Repetition
+
+##### 1. Describe the equivalents of ?, +, and * in {n, m} form.
+
+* `? == {1}`
+* `+ == {1,}`
+* `* == {0,}`
+
+##### 2. Describe in words what these regular expressions match (read carefully to if I'm using a regular expression or a string that defines a regular expressions):
+
+1. `^.*$` matches an entire string. `^` matches the start of a string. `.` is any character which is repeated 0 or more times with `*`. `$` matches the end of a string. 
+2. `"\\{.+\\}"`
+3.`\d{4}-\d{2}-\d{2}` matches exactly 4 digits followed by a dash followed by exactly two digits followed by a dash followed by exactly two digits. This is the same as the ISO8601 date international standard. 
+4. `\\\\{4}` matches exactly four backslashes. 
+
+##### 3. Create regular expressions to find all words that:
+
+1. Start with three consonants.
+
+```{r repetition 3.1}
+string <- c("scratch", "apple")
+str_view(string, "^[^aeiou]{3}")
+```
+
+2. Have three or more vowels in a row.
+
+```{r repetition 3.2}
+string <- c("scratch", "aaapple")
+str_view(string, "^[aeiou]{3,}")
+```
+
+3. Have two or more vowel consonant pairs in a row.
+
+```{r repetition 3.3}
+string <- c("banana", "coconut")
+str_view(string, "([aeiou][^aeiou]){2,}")
+```
+
+##### 4. Solve the beginner regexp crosswords at http://regexcrossword.com/challenges/beginner
+
+## Grouping and Backreferences
+
+##### 1. Describe in words what these expressions will match:
+
+1. `(.)\1\1` will match any string of three repeated letters or symbols. 
+2. `"(.)(.)\\2\\1"` will match a four letter palindrome (spelled the same forwards and backwards).
+3. `(..)\1` will match a four letter string where the second half is a reptition of the first half. 
+4. `"(.).\\1.\\1"` will match and repetition of the same character three times where each character is spearated by a character (ex. "ababa" and "&&&&&").
+5. `"(.)(.)(.)*\\3\\2\\1"` will match a string of characters where the first three characters are repeted in reverse and the middle character can be repeated multiple times (ex. "abccba" and "abcccccba").
+
+##### 2. Construct regular expressions to match words that:
+ 1. Start and end with the same character. `"^(.).*\\1$"`
+ 2. Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice) `".*(..).*\\1.*"`
+ 3. Contain one letter repeated in at least three places (e.g., "eleven" contains three "e"s). `".*(.).*\\1.*\\1.*"`
+
+## Tools
+
+##### 1. For each of the following challenges, try solving it by using both a singular regular expression, and a combination of multiple `str_detect()` calls:
+  1. Find all words that start of end with x. `str_detect(words, "^x.*x$")` & `str_detect(str_detect(words, "^x"), "x$")`
+  2. Find all words that start with a vowel and end with a consonant. `str_detect(words, "^[aeiou].*[^aeiou]$")` & `str_detect(str_detect(words, "^[aeiou]"), "[^aeiou]$")`
+  3. Are there any words that contain at least one of each different vowel? TODO(aaron): hmm?
+  4. What word has the highest number of vowels? What word has the highest proportion of vowels? (Hint: what is the denominator)
+  
+```{r number of vowels}
+as_tibble(words) %>%
+  mutate(vowels = str_count(value, "[aeiou]")) %>%
+  filter(vowels == max(vowels))
+```
+
+```{r proportion of vowels}
+as_tibble(words) %>%
+  mutate(letters = str_count(value), 
+         vowels = str_count(value, "[aeiou]"),
+         proportion = vowels / letters) %>%
+  filter(proportion == max(proportion))
+```
+
+## Extract Matches
+
+##### 1. In the previous example, you might have noticed that the regular expression matched "flickered", which is not a color. Modify the regex to fix the problem. 
+```{r boundaries}
+  colors <- "\\b(red|orange|yellow|green|blue|purple)\\b"
+  more <- sentences[str_count(sentences, colors) > 1]
+  str_view_all(more, colors)
+```
+##### 2. From the Harvard sentences data, extract:
+  1. The first word from each sentence.
+  `str_extract(sentences, "[^\\s]*")`
+  2. All words ending in ing. 
+  `str_extract_all(sentences, "\\b[^\\s]*ing\\b")`
+  3. All plurals.
+  TODO(aaron): hmm?
+  
+## Grouped Match
+
+##### 1. Find all words that come after a "number" like "one", "two", "three", etc. Pull out the number and the word.
+```{r number-word}
+numbers <- "([Oo]ne|[Tt]wo|[Tt]hree|[Ff]our|[Ff]ive|[Ss]ix|[Ss]even|[Ee]ight|[Nn]ine|[Tt]en) ([^ ]+)"
+tibble(sentence = sentences) %>%
+  extract(
+    sentence, c("number", "word"), numbers,
+    remove = FALSE
+  ) %>% 
+  filter(!is.na(number))
+```
+
+##### 2. Find all contractions. Separate out the pieces before and after the apostrophe. 
+
+`"[^ ]*'[^ ]*"` could be used, but it returns possessive nouns. The following string of regular expressions gets around this problem. 
+
+```{r contractions}
+contractions <- "[^ ]*'m|[^ ]*n't|[^ ]*'ve|[^ ]*'d|[^ ]*'re|[^ ]*'ll|[Ll]et's|[Ss]he's|[Hh]e's"
+tibble(sentence = sentences) %>%
+  mutate(contraction = str_extract(sentences, contractions)) %>%
+  filter(!is.na(contraction)) %>%
+  extract(contraction, c("before", "apostrophe", "after"), "(.*)(')(.*)")
+```
+
+## Replacing Matches
+
+##### 1. Replace all forward slashes in a string with backslashes. `str_replace_all("a/b/c", "/", "\\\\")`
+##### 2. Implement a simple version of `str_to_lower()` using `str_replace_all()`. `str_replace_all("AbC", "[A-Z]", tolower)`
+##### 3. Switch the first and last letters in words. Which of those strings are still words?
+```{r swap letters}
+new.words <- str_replace(words, "(^.)(.*)(.$)", "\\3\\2\\1")
+words[new.words %in% words]
+```
+
+## Splitting
+
+##### 1. Split up a string like "apples, pears, and bananas" into individual components.
+`str_split("apples, pears, and bananas", boundary("word"))`
+
+##### 2. Why is it better to split up by boundary("word") than " "?
+`" "` captures non-words like the space after the period while `boundary("word")` only captures words. 
+
+##### 3. What does splitting with an empty string ("") do? Experiment and read the documentation.
+"An empty pattern, "", is equivalent to boundary("character")."
+
+## Other Types of Pattern
+
+##### 1. How would you find all strings containing "\" with regex() versus fixed. `regex("\\\\")` & `fixed("\")`
+
+##### 2. What are the five most common words in setences? 
+The five most common words are "the", "a", "of", "to", and "and".
+```{r common words}
+str_split(sentences, boundary("word")) %>%
+  flatten_chr() %>%
+  str_to_lower() %>%
+  as_tibble() %>%
+  group_by(value) %>%
+  count() %>%
+  arrange(-n) %>%
+  ungroup() %>%
+  top_n(5)
+```
+
+## Other Uses of Regular Expressions
+
+##### 1. Find the **stringi** function that:
+  1. Count the number of words `stri_count_words`
+  2. Find duplicated strings. `stri_duplicated()`
+  3. Generate random text. `stri_rand_strings()`
+  
+##### 2. How do you control the language that str_sort() uses for sorting?
+With the `locale =` argument in the `opts_collator` argument. 
