@@ -34,7 +34,7 @@ Let's rotate the labels.
 ```{r gss 1.1.2}
 ggplot(gss_cat, aes(rincome)) +
   geom_bar() +
-  theme(axis.text.x=element_text(angle=90))
+  theme(axis.text.x = element_text(angle=90))
 ```
 
 ##### 2. What is the most common `relig` in this survey? What's the most common `partyid`?
